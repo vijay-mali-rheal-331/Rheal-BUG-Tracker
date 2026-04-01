@@ -1,0 +1,48 @@
+<div class="upload-container">
+  <h2>File &amp; Folder Upload</h2>
+
+  <div class="pick-row">
+    <label class="btn-pick">
+      Pick Files
+      <input type="file" multiple (change)="onFilesSelected($event)" hidden />
+    </label>
+
+    <label class="btn-pick">
+      Pick Folder
+      <input type="file" webkitdirectory multiple (change)="onFolderSelected($event)" hidden />
+    </label>
+
+    <button class="btn-clear" (click)="clearAll()" [disabled]="!selectedFiles.length">
+      Clear All
+    </button>
+  </div>
+
+  <div class="file-list" *ngIf="selectedFiles.length">
+    <p class="file-count">{{ selectedFiles.length }} file(s) selected</p>
+    <ul>
+      <li *ngFor="let file of selectedFiles; let i = index">
+        <span class="file-name">{{ file.webkitRelativePath || file.name }}</span>
+        <span class="file-size">{{ formatSize(file.size) }}</span>
+        <button class="btn-remove" (click)="removeFile(i)">&#x2715;</button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="empty-state" *ngIf="!selectedFiles.length">
+    No files selected. Use the buttons above to pick files or a folder.
+  </div>
+
+  <div class="progress-bar" *ngIf="status === 'uploading'">
+    <div class="progress-fill" [style.width.%]="progress"></div>
+    <span>{{ progress }}%</span>
+  </div>
+
+  <div class="msg success" *ngIf="status === 'success'">Upload successful!</div>
+  <div class="msg error"   *ngIf="status === 'error'">Error: {{ errorMessage }}</div>
+
+  <button class="btn-send"
+          (click)="send()"
+          [disabled]="!selectedFiles.length || status === 'uploading'">
+    {{ status === 'uploading' ? 'Uploading...' : 'Send' }}
+  </button>
+</div>
