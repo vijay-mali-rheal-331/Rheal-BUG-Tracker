@@ -1,48 +1,405 @@
-<div class="upload-container">
-  <h2>File &amp; Folder Upload</h2>
+<div class="min-h-screen bg-gray-50 flex flex-col">
 
-  <div class="pick-row">
-    <label class="btn-pick">
-      Pick Files
-      <input type="file" multiple (change)="onFilesSelected($event)" hidden />
-    </label>
+  <!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+  <header class="bg-indigo-700 shadow-lg">
+    <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🔍</span>
+        <span class="text-white font-bold text-xl tracking-tight">RhealBUGTracker</span>
+      </div>
+      <span class="text-indigo-200 text-sm hidden sm:block">AI-Powered Code Analysis</span>
+    </div>
+  </header>
 
-    <label class="btn-pick">
-      Pick Folder
-      <input type="file" webkitdirectory multiple (change)="onFolderSelected($event)" hidden />
-    </label>
+  <!-- ══════════════════════════ STEP INDICATOR ══════════════════════════════ -->
+  <div class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-center gap-0">
 
-    <button class="btn-clear" (click)="clearAll()" [disabled]="!selectedFiles.length">
-      Clear All
-    </button>
+      <ng-container *ngFor="let s of [{n:1,label:'Setup'},{n:2,label:'Source'},{n:3,label:'Analyzing'},{n:4,label:'Results'}]; let last = last; let i = index">
+        <div class="flex flex-col items-center gap-1 min-w-[70px]">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-200"
+               [ngClass]="{
+                 'bg-indigo-600 border-indigo-600 text-white': isStepActive(s.n),
+                 'bg-green-100 border-green-500 text-green-600': isStepDone(s.n),
+                 'bg-white border-gray-300 text-gray-400': !isStepActive(s.n) && !isStepDone(s.n)
+               }">
+            <span *ngIf="!isStepDone(s.n)">{{ s.n }}</span>
+            <span *ngIf="isStepDone(s.n)">✓</span>
+          </div>
+          <span class="text-xs font-medium"
+                [ngClass]="{
+                  'text-indigo-600': isStepActive(s.n),
+                  'text-green-600': isStepDone(s.n),
+                  'text-gray-400': !isStepActive(s.n) && !isStepDone(s.n)
+                }">{{ s.label }}</span>
+        </div>
+        <div *ngIf="!last" class="flex-1 h-0.5 mb-5 mx-1 transition-colors duration-200"
+             [ngClass]="isStepDone(s.n) ? 'bg-green-400' : 'bg-gray-200'">
+        </div>
+      </ng-container>
+
+    </div>
   </div>
 
-  <div class="file-list" *ngIf="selectedFiles.length">
-    <p class="file-count">{{ selectedFiles.length }} file(s) selected</p>
-    <ul>
-      <li *ngFor="let file of selectedFiles; let i = index">
-        <span class="file-name">{{ file.webkitRelativePath || file.name }}</span>
-        <span class="file-size">{{ formatSize(file.size) }}</span>
-        <button class="btn-remove" (click)="removeFile(i)">&#x2715;</button>
-      </li>
-    </ul>
-  </div>
+  <!-- ═════════════════════════════== MAIN ══════════════════════════════════ -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
 
-  <div class="empty-state" *ngIf="!selectedFiles.length">
-    No files selected. Use the buttons above to pick files or a folder.
-  </div>
+    <!-- ─────────────────────────── STEP 1 : SETUP ─────────────────────────── -->
+    <div *ngIf="step === 'setup'" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-1">Select Your Source</h2>
+      <p class="text-gray-500 text-sm mb-6">Pick files, a folder, or a GitHub repo. The AI will use our built-in review checklist automatically.</p>
 
-  <div class="progress-bar" *ngIf="status === 'uploading'">
-    <div class="progress-fill" [style.width.%]="progress"></div>
-    <span>{{ progress }}%</span>
-  </div>
+      <!-- Source type -->
+      <div class="mb-5">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Source Type</label>
+        <div class="flex gap-3 flex-wrap">
 
-  <div class="msg success" *ngIf="status === 'success'">Upload successful!</div>
-  <div class="msg error"   *ngIf="status === 'error'">Error: {{ errorMessage }}</div>
+          <!-- Opens file picker immediately -->
+          <label class="cursor-pointer px-5 py-2.5 rounded-lg border-2 text-sm font-medium transition-all"
+                 [ngClass]="sourceType === 'files'
+                   ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
+                   : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400'"
+                 (click)="sourceType = 'files'">
+            📄 Pick Files
+            <input type="file" multiple (change)="onFilesSelected($event)" class="sr-only" />
+          </label>
 
-  <button class="btn-send"
-          (click)="send()"
-          [disabled]="!selectedFiles.length || status === 'uploading'">
-    {{ status === 'uploading' ? 'Uploading...' : 'Send' }}
-  </button>
+          <!-- Opens folder picker immediately -->
+          <label class="cursor-pointer px-5 py-2.5 rounded-lg border-2 text-sm font-medium transition-all"
+                 [ngClass]="sourceType === 'files'
+                   ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
+                   : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400'"
+                 (click)="sourceType = 'files'">
+            📂 Pick Folder
+            <input type="file" webkitdirectory multiple (change)="onFilesSelected($event)" class="sr-only" />
+          </label>
+
+          <!-- GitHub toggle (no file picker) -->
+          <button (click)="sourceType = 'github'; clearFiles()"
+                  class="px-5 py-2.5 rounded-lg border-2 text-sm font-medium transition-all"
+                  [ngClass]="sourceType === 'github'
+                    ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
+                    : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400'">
+            🐙 GitHub Repository
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline file list (shown after picking files) -->
+      <div *ngIf="sourceType === 'files' && selectedFiles.length" class="border border-gray-200 rounded-lg overflow-hidden mb-5">
+        <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {{ selectedFiles.length }} file(s) selected
+          </span>
+          <button (click)="clearFiles()" class="text-xs text-red-400 hover:text-red-600 transition">Clear All</button>
+        </div>
+        <ul class="divide-y divide-gray-100 max-h-48 overflow-y-auto">
+          <li *ngFor="let file of selectedFiles; let i = index"
+              class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50">
+            <span class="shrink-0">📄</span>
+            <span class="flex-1 text-gray-700 break-all">{{ file.webkitRelativePath || file.name }}</span>
+            <span class="text-gray-400 text-xs whitespace-nowrap">{{ formatSize(file.size) }}</span>
+            <button (click)="removeFile(i)" class="text-gray-300 hover:text-red-500 transition text-base leading-none ml-1">✕</button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Empty state hint when files mode is active but nothing picked -->
+      <div *ngIf="sourceType === 'files' && !selectedFiles.length"
+           class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400 mb-5">
+        <div class="text-3xl mb-1">📂</div>
+        <p class="text-sm">Click <strong>Pick Files</strong> or <strong>Pick Folder</strong> above to get started.</p>
+      </div>
+
+      <!-- GitHub fields -->
+      <div *ngIf="sourceType === 'github'" class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-5 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            Repository URL <span class="text-red-500">*</span>
+          </label>
+          <input [(ngModel)]="repoUrl" type="url" placeholder="https://github.com/owner/repo"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            Branch <span class="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <input [(ngModel)]="branch" type="text" placeholder="main"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button (click)="goToSource()"
+                [disabled]="(sourceType === 'github' && !repoUrl.trim()) || (sourceType === 'files' && !selectedFiles.length)"
+                class="px-7 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition">
+          Continue →
+        </button>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────── STEP 2 : SOURCE ────────────────────────── -->
+    <div *ngIf="step === 'source'" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+
+      <!-- FILE UPLOAD -->
+      <ng-container *ngIf="sourceType === 'files'">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Upload Files</h2>
+        <p class="text-gray-500 text-sm mb-6">Pick files, a folder, or drop a ZIP archive. Supported: .cs .ts .js .py .java .go and more.</p>
+
+        <!-- Pick buttons -->
+        <div class="flex flex-wrap gap-3 mb-4">
+          <label class="cursor-pointer px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+            📄 Pick Files
+            <input type="file" multiple (change)="onFilesSelected($event)" class="sr-only" />
+          </label>
+          <label class="cursor-pointer px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+            📂 Pick Folder
+            <input type="file" webkitdirectory multiple (change)="onFilesSelected($event)" class="sr-only" />
+          </label>
+          <button (click)="clearFiles()" [disabled]="!selectedFiles.length"
+                  class="px-4 py-2 border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-sm rounded-lg transition">
+            Clear All
+          </button>
+        </div>
+
+        <!-- File list -->
+        <div *ngIf="selectedFiles.length" class="border border-gray-200 rounded-lg overflow-hidden mb-4">
+          <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {{ selectedFiles.length }} file(s) selected
+          </div>
+          <ul class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+            <li *ngFor="let file of selectedFiles; let i = index"
+                class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm">
+              <span class="text-base shrink-0">📄</span>
+              <span class="flex-1 text-gray-700 break-all">{{ file.webkitRelativePath || file.name }}</span>
+              <span class="text-gray-400 text-xs whitespace-nowrap">{{ formatSize(file.size) }}</span>
+              <button (click)="removeFile(i)"
+                      class="text-gray-300 hover:text-red-500 transition ml-1 text-lg leading-none">✕</button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="!selectedFiles.length"
+             class="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center text-gray-400 mb-4">
+          <div class="text-4xl mb-2">📭</div>
+          <p class="text-sm">No files selected yet. Use the buttons above.</p>
+        </div>
+      </ng-container>
+
+      <!-- GITHUB SUMMARY -->
+      <ng-container *ngIf="sourceType === 'github'">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">GitHub Repository</h2>
+        <p class="text-gray-500 text-sm mb-6">The repo will be cloned, analysed, and temp files cleaned up automatically.</p>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg divide-y divide-gray-100 mb-4">
+          <div class="flex gap-3 px-4 py-3 text-sm">
+            <span class="font-semibold text-gray-500 w-24 shrink-0">Repository</span>
+            <span class="text-gray-800 break-all">{{ repoUrl }}</span>
+          </div>
+          <div *ngIf="branch" class="flex gap-3 px-4 py-3 text-sm">
+            <span class="font-semibold text-gray-500 w-24 shrink-0">Branch</span>
+            <span class="text-gray-800">{{ branch }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-2">
+        <button (click)="backToSetup()"
+                class="px-5 py-2.5 border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-lg transition">
+          ← Back
+        </button>
+        <button (click)="startAnalysis()"
+                [disabled]="sourceType === 'files' && !selectedFiles.length"
+                class="px-7 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition">
+          🚀 Start Analysis
+        </button>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────── STEP 3 : ANALYZING ─────────────────────── -->
+    <div *ngIf="step === 'analyzing'" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Analysing Code…</h2>
+
+      <!-- Error state -->
+      <div *ngIf="analyzeError" class="bg-red-50 border border-red-200 rounded-xl p-5 text-left mb-4">
+        <p class="font-semibold text-red-700 mb-1">Analysis failed</p>
+        <p class="text-red-600 text-sm mb-4">{{ analyzeError }}</p>
+        <button (click)="backToSetup()"
+                class="px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm rounded-lg transition">
+          ← Start Over
+        </button>
+      </div>
+
+      <ng-container *ngIf="!analyzeError">
+        <!-- Upload progress -->
+        <div *ngIf="sourceType === 'files' && uploadProgress < 100" class="mb-5 text-left">
+          <div class="flex justify-between text-xs text-gray-500 mb-1.5">
+            <span>Uploading files…</span><span>{{ uploadProgress }}%</span>
+          </div>
+          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full progress-upload transition-all duration-300"
+                 [style.width.%]="uploadProgress"></div>
+          </div>
+        </div>
+
+        <!-- Analysis progress -->
+        <div class="mb-5 text-left">
+          <div class="flex justify-between text-xs text-gray-500 mb-1.5">
+            <span *ngIf="!session">Waiting for session…</span>
+            <span *ngIf="session">Analysing: {{ session.processedFiles }} / {{ session.totalFiles }} files</span>
+            <span *ngIf="session" class="font-semibold text-indigo-600">{{ session.progressPercent }}%</span>
+          </div>
+          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full progress-analyze transition-all duration-300"
+                 [style.width.%]="session ? session.progressPercent : 0"></div>
+          </div>
+        </div>
+
+        <!-- Session status badge -->
+        <div *ngIf="session" class="flex items-center justify-center gap-3 mb-6">
+          <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                [ngClass]="{
+                  'bg-yellow-100 text-yellow-700': session.status === 'Pending',
+                  'bg-blue-100 text-blue-700':   session.status === 'Running',
+                  'bg-green-100 text-green-700': session.status === 'Completed',
+                  'bg-red-100 text-red-700':     session.status === 'Failed'
+                }">{{ session.status }}</span>
+          <span class="text-gray-400 text-xs font-mono">{{ session.sessionId }}</span>
+        </div>
+
+        <!-- Spinner -->
+        <div class="flex flex-col items-center gap-3">
+          <div class="spinner"></div>
+          <p class="text-gray-400 text-sm">AI is reviewing your code…</p>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- ─────────────────────────── STEP 4 : RESULTS ───────────────────────── -->
+    <div *ngIf="step === 'results' && report" class="space-y-5">
+
+      <!-- Summary cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="bg-white border-t-4 border-red-500   rounded-xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-black text-red-500">{{ report.summary.critical }}</div>
+          <div class="text-xs font-semibold text-gray-500 uppercase mt-1">Critical</div>
+        </div>
+        <div class="bg-white border-t-4 border-orange-500 rounded-xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-black text-orange-500">{{ report.summary.high }}</div>
+          <div class="text-xs font-semibold text-gray-500 uppercase mt-1">High</div>
+        </div>
+        <div class="bg-white border-t-4 border-amber-500  rounded-xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-black text-amber-500">{{ report.summary.medium }}</div>
+          <div class="text-xs font-semibold text-gray-500 uppercase mt-1">Medium</div>
+        </div>
+        <div class="bg-white border-t-4 border-green-500  rounded-xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-black text-green-500">{{ report.summary.low }}</div>
+          <div class="text-xs font-semibold text-gray-500 uppercase mt-1">Low</div>
+        </div>
+        <div class="bg-white border-t-4 border-indigo-500 rounded-xl p-4 text-center shadow-sm col-span-2 sm:col-span-1">
+          <div class="text-3xl font-black text-indigo-500">{{ report.summary.totalIssues }}</div>
+          <div class="text-xs font-semibold text-gray-500 uppercase mt-1">Total</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-gray-500 mr-1">Filter:</span>
+          <button (click)="severityFilter = 'All'"
+                  class="px-3 py-1 rounded-full text-xs font-semibold border transition"
+                  [ngClass]="severityFilter === 'All' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-600 hover:border-indigo-400'">
+            All
+          </button>
+          <button (click)="severityFilter = 'Critical'"
+                  class="px-3 py-1 rounded-full text-xs font-semibold border transition"
+                  [ngClass]="severityFilter === 'Critical' ? 'bg-red-500 text-white border-red-500' : 'border-gray-300 text-gray-600 hover:border-red-400'">
+            Critical
+          </button>
+          <button (click)="severityFilter = 'High'"
+                  class="px-3 py-1 rounded-full text-xs font-semibold border transition"
+                  [ngClass]="severityFilter === 'High' ? 'bg-orange-500 text-white border-orange-500' : 'border-gray-300 text-gray-600 hover:border-orange-400'">
+            High
+          </button>
+          <button (click)="severityFilter = 'Medium'"
+                  class="px-3 py-1 rounded-full text-xs font-semibold border transition"
+                  [ngClass]="severityFilter === 'Medium' ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-300 text-gray-600 hover:border-amber-400'">
+            Medium
+          </button>
+          <button (click)="severityFilter = 'Low'"
+                  class="px-3 py-1 rounded-full text-xs font-semibold border transition"
+                  [ngClass]="severityFilter === 'Low' ? 'bg-green-500 text-white border-green-500' : 'border-gray-300 text-gray-600 hover:border-green-400'">
+            Low
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button (click)="downloadMarkdown()"
+                  class="px-3 py-1.5 border border-gray-300 text-gray-600 hover:bg-gray-50 text-xs font-medium rounded-lg transition">
+            ⬇ Download Report
+          </button>
+          <button (click)="startOver()"
+                  class="px-3 py-1.5 border border-gray-300 text-gray-600 hover:bg-gray-50 text-xs font-medium rounded-lg transition">
+            ↩ New Analysis
+          </button>
+        </div>
+      </div>
+
+      <!-- No issues -->
+      <div *ngIf="filteredFiles.length === 0"
+           class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+        <div class="text-4xl mb-2">✅</div>
+        <p class="text-gray-500 text-sm">
+          No issues found{{ severityFilter !== 'All' ? ' for ' + severityFilter + ' severity' : '' }}.
+        </p>
+      </div>
+
+      <!-- File result cards -->
+      <div *ngFor="let fileResult of filteredFiles"
+           class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+        <!-- File header -->
+        <div (click)="toggleFile(fileResult.file)"
+             class="flex items-center gap-3 px-5 py-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition select-none">
+          <span class="text-base shrink-0">📄</span>
+          <span class="flex-1 text-sm font-semibold text-gray-800 break-all">{{ fileResult.file }}</span>
+          <span class="shrink-0 text-xs text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+            {{ fileResult.issues.length }} issue{{ fileResult.issues.length !== 1 ? 's' : '' }}
+          </span>
+          <span class="text-gray-400 text-xs shrink-0">{{ isExpanded(fileResult.file) ? '▲' : '▼' }}</span>
+        </div>
+
+        <!-- Issues -->
+        <div *ngIf="isExpanded(fileResult.file)" class="divide-y divide-gray-100">
+          <div *ngFor="let issue of fileResult.issues" class="px-5 py-4">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <!-- Severity badge -->
+              <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border"
+                    [ngClass]="{
+                      'bg-red-50 text-red-600 border-red-200':    issue.severity === 'Critical',
+                      'bg-orange-50 text-orange-600 border-orange-200': issue.severity === 'High',
+                      'bg-amber-50 text-amber-600 border-amber-200':  issue.severity === 'Medium',
+                      'bg-green-50 text-green-600 border-green-200':  issue.severity === 'Low'
+                    }">{{ issue.severity }}</span>
+              <!-- Type -->
+              <span class="text-sm font-semibold text-gray-700">
+                {{ issueTypeIcon(issue.type) }} {{ issue.type }}
+              </span>
+              <!-- Line -->
+              <span *ngIf="issue.line > 0" class="ml-auto text-xs font-mono text-gray-400">
+                Line {{ issue.line }}
+              </span>
+            </div>
+            <!-- Description -->
+            <p class="text-sm text-gray-700 leading-relaxed mb-3">{{ issue.description }}</p>
+            <!-- Suggestion -->
+            <div class="bg-green-50 border-l-4 border-green-400 rounded-r-lg px-4 py-2.5 text-sm text-green-800">
+              <span class="font-bold">💡 Suggestion: </span>{{ issue.suggestion }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>

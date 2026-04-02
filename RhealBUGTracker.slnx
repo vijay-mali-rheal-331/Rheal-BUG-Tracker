@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RhealBUGTracker.API/RhealBUGTracker.API.csproj" />
+  <Project Path="RhealBUGTracker.Application/RhealBUGTracker.Application.csproj" />
+  <Project Path="RhealBUGTracker.Domain/RhealBUGTracker.Domain.csproj" />
+  <Project Path="RhealBUGTracker.Infrastructure/RhealBUGTracker.Infrastructure.csproj" />
+</Solution>

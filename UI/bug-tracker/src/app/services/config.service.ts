@@ -9,21 +9,22 @@ export interface AppConfig {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  apiUrl: 'http://localhost:5000'
+  apiUrl: 'http://localhost:5247'
 };
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
   private config: AppConfig = { ...DEFAULT_CONFIG };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  load(): Promise<void> {
-    return firstValueFrom(
+  async load(): Promise<void> {
+    const data = await firstValueFrom(
       this.http.get<AppConfig>('/config.json').pipe(
         catchError(() => of(DEFAULT_CONFIG))
       )
-    ).then(data => { this.config = data; });
+    );
+    this.config = data;
   }
 
   get apiUrl(): string {

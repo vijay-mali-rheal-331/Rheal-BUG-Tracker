@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  body { @apply font-sans bg-gray-50 text-gray-900 antialiased; }
+}
+
+@layer components {
+  /* Spinner – can't be done purely with Tailwind */
+  .spinner {
+    @apply w-10 h-10 rounded-full border-4 border-gray-200;
+    border-top-color: theme('colors.indigo.600');
+    animation: spin 0.75s linear infinite;
+  }
+
+  /* Progress bar fill gradient */
+  .progress-upload  { background: linear-gradient(90deg, theme('colors.indigo.500'), theme('colors.indigo.300')); }
+  .progress-analyze { background: linear-gradient(90deg, theme('colors.green.500'),  theme('colors.green.300')); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

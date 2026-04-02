@@ -1,0 +1,14 @@
+2026-04-02 11:56:02.047 +05:30 [INF] Now listening on: http://localhost:5247
+2026-04-02 11:56:06.400 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-02 11:56:09.564 +05:30 [INF] Hosting environment: Development
+2026-04-02 11:56:09.569 +05:30 [INF] Content root path: D:\Rheal-BUG-Tracker\RhealBUGTracker.API
+2026-04-02 12:56:28.495 +05:30 [INF] Application is shutting down...
+2026-04-02 13:02:50.361 +05:30 [INF] Now listening on: http://localhost:5247
+2026-04-02 13:02:50.513 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-02 13:02:50.518 +05:30 [INF] Hosting environment: Development
+2026-04-02 13:02:50.525 +05:30 [INF] Content root path: D:\Rheal-BUG-Tracker\RhealBUGTracker.API
+2026-04-02 13:14:23.176 +05:30 [INF] Application is shutting down...
+2026-04-02 13:14:33.230 +05:30 [INF] Now listening on: http://localhost:5247
+2026-04-02 13:14:33.385 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-02 13:14:33.389 +05:30 [INF] Hosting environment: Development
+2026-04-02 13:14:33.393 +05:30 [INF] Content root path: D:\Rheal-BUG-Tracker\RhealBUGTracker.API
